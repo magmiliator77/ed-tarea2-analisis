@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Tarea 2: Análisis de Software</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome for Icons (Unicode replacement/No SVG requirement adherence) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Chart Container Styling Requirement */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Tailwind max-w-xl equivalent */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom Flowchart Styling */
+        .flow-node {
+            transition: all 0.3s ease;
+        }
+        .flow-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .flow-arrow {
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: '→';
+            font-size: 24px;
+            color: #94a3b8;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @media (max-width: 768px) {
+            .flow-arrow::after {
+                content: '↓';
+                top: 100%;
+            }
+        }
+        
+        .active-tab {
+            border-bottom: 2px solid #3b82f6;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+    </style>
+
+    <!-- Placeholder Comments Required by Prompt -->
+    <!-- Chosen Palette: Corporate Clean (Slate, Blue, Emerald, Indigo) - chosen for clarity, professionalism, and academic tone. Warm neutral background (Slate-50) reduces eye strain. -->
+    
+    <!-- Application Structure Plan: 
+         1. Header: Context and high-level identity.
+         2. Tab Navigation: Splits content into logical views (Dashboard, Roles, Workflow) to prevent scrolling fatigue.
+         3. Dashboard View: High-level quantitative data (Points distribution) and project status.
+         4. Roles View: Detailed explorer for team responsibilities. User clicks a role to see specific tasks and deliverables.
+         5. Workflow View: Interactive HTML-based diagram showing the dependency chain (Reqs -> Design -> UI).
+         6. Rationale: The report is about planning and structure. A dashboard format best conveys the "Management" aspect of the assignment.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Report Info: Point distribution (3.5, 2.5, 2.0, 2.0). 
+            Goal: Inform/Compare. 
+            Viz: Doughnut Chart. 
+            Interaction: Click legend to toggle visibility. 
+            Justification: Quickly shows weight of each role.
+         
+         2. Report Info: Role Profiles (Text vs Logic vs Design). 
+            Goal: Compare/Analyze. 
+            Viz: Radar Chart. 
+            Interaction: Hover to see data points. 
+            Justification: Highlights why "Architect" has fewer points but high complexity (Logic).
+            
+         3. Report Info: Workflow Dependencies. 
+            Goal: Organize/Flow. 
+            Viz: HTML/CSS Flexbox Diagram (No Mermaid). 
+            Interaction: Hover nodes to highlight path. 
+            Justification: Visualizes the critical path described in text.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used (using FontAwesome fonts and HTML Canvas). NO Mermaid JS used. -->
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- App Container -->
+    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="mb-8 border-b border-slate-200 pb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider">Entornos de Desarrollo • Tarea 2</h4>
+                    <h1 class="text-3xl font-bold text-slate-900 mt-1">Planificación y Análisis de Software</h1>
+                    <p class="text-slate-500 mt-2 text-sm max-w-2xl">
+                        Centro de mando para la gestión del proyecto: asignación de roles, control de dependencias y desglose de la fase de análisis.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-100">
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400 font-medium uppercase">Total Puntos</p>
+                        <p class="text-2xl font-bold text-slate-800">10.0</p>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400 font-medium uppercase">Miembros</p>
+                        <p class="text-2xl font-bold text-slate-800">3</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="mb-8 overflow-x-auto">
+            <ul class="flex space-x-8 border-b border-slate-200 min-w-max">
+                <li>
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="active-tab pb-4 px-1 text-sm transition-colors hover:text-blue-600 focus:outline-none">
+                        <i class="fa-solid fa-chart-pie mr-2"></i>Visión General
+                    </button>
+                </li>
+                <li>
+                    <button onclick="switchTab('roles')" id="tab-roles" class="text-slate-500 pb-4 px-1 text-sm transition-colors hover:text-blue-600 focus:outline-none">
+                        <i class="fa-solid fa-users mr-2"></i>Roles y Tareas
+                    </button>
+                </li>
+                <li>
+                    <button onclick="switchTab('workflow')" id="tab-workflow" class="text-slate-500 pb-4 px-1 text-sm transition-colors hover:text-blue-600 focus:outline-none">
+                        <i class="fa-solid fa-diagram-project mr-2"></i>Flujo de Trabajo
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Content Views -->
+        <main class="flex-grow">
+            
+            <!-- VIEW 1: DASHBOARD -->
+            <section id="view-dashboard" class="space-y-8 animate-fade-in">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Resumen de Métricas</h2>
+                    <p class="text-slate-600 mb-6 text-sm">
+                        Esta sección proporciona una visión cuantitativa de la asignación del proyecto. Se analiza cómo se distribuyen los 10 puntos de la rúbrica entre el trabajo individual y cooperativo, así como el perfil de habilidades requerido para cada rol (documentación vs. lógica vs. gestión).
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <!-- Chart 1: Points Distribution -->
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <h3 class="text-sm font-semibold text-slate-700 mb-4 text-center">Distribución de Puntuación (10 pts)</h3>
+                            <div class="chart-container">
+                                <canvas id="pointsChart"></canvas>
+                            </div>
+                            <p class="text-xs text-center text-slate-400 mt-2 italic">Incluye parte individual y parte proporcional compartida.</p>
+                        </div>
+
+                        <!-- Chart 2: Skill Profile Analysis -->
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <h3 class="text-sm font-semibold text-slate-700 mb-4 text-center">Perfil de Carga Cognitiva por Rol</h3>
+                            <div class="chart-container">
+                                <canvas id="skillsChart"></canvas>
+                            </div>
+                            <p class="text-xs text-center text-slate-400 mt-2 italic">Análisis cualitativo basado en responsabilidades asignadas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-indigo-100 rounded-lg text-indigo-600">
+                                <i class="fa-solid fa-file-contract text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-indigo-500 font-bold uppercase">Entregable Crítico</p>
+                                <p class="text-lg font-bold text-slate-800">SRS Document</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 rounded-xl p-6 border border-emerald-100">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-emerald-100 rounded-lg text-emerald-600">
+                                <i class="fa-solid fa-database text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-emerald-500 font-bold uppercase">Modelado</p>
+                                <p class="text-lg font-bold text-slate-800">DFDs & E-R</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 rounded-xl p-6 border border-amber-100">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-amber-100 rounded-lg text-amber-600">
+                                <i class="fa-solid fa-users-gear text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-amber-500 font-bold uppercase">Cooperativo</p>
+                                <p class="text-lg font-bold text-slate-800">2.0 Puntos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: ROLES & TASKS -->
+            <section id="view-roles" class="hidden space-y-8 animate-fade-in">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Estructura del Equipo</h2>
+                    <p class="text-slate-600 mb-6 text-sm">
+                        Detalle interactivo de las responsabilidades individuales. Seleccione un rol para ver sus entregables específicos, peso en la nota final y su función dentro del ciclo de vida del desarrollo.
+                    </p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- Role Selector -->
+                        <div class="lg:col-span-4 space-y-4">
+                            <!-- Member 1 -->
+                            <button onclick="selectRole('analyst')" id="btn-analyst" class="w-full text-left p-4 rounded-xl border-2 border-blue-500 bg-blue-50 transition-all hover:shadow-md">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">Miembro 1</span>
+                                    <span class="text-blue-700 font-bold">3.5 pts</span>
+                                </div>
+                                <h3 class="font-bold text-slate-800 text-lg">Analista de Requisitos</h3>
+                                <p class="text-xs text-slate-500 mt-1">Ingeniería de Requisitos y Documentación</p>
+                            </button>
+
+                            <!-- Member 2 -->
+                            <button onclick="selectRole('architect')" id="btn-architect" class="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all hover:shadow-md">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full font-bold">Miembro 2</span>
+                                    <span class="text-slate-700 font-bold">2.5 pts</span>
+                                </div>
+                                <h3 class="font-bold text-slate-800 text-lg">Arquitecto de Datos</h3>
+                                <p class="text-xs text-slate-500 mt-1">Modelado DFDs y Base de Datos</p>
+                            </button>
+
+                            <!-- Member 3 -->
+                            <button onclick="selectRole('pm')" id="btn-pm" class="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all hover:shadow-md">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-bold">Miembro 3</span>
+                                    <span class="text-slate-700 font-bold">2.0 pts</span>
+                                </div>
+                                <h3 class="font-bold text-slate-800 text-lg">Jefe de Proyecto & UI</h3>
+                                <p class="text-xs text-slate-500 mt-1">Gestión, Tiempos y Diseño Visual</p>
+                            </button>
+                        </div>
+
+                        <!-- Role Details Panel -->
+                        <div class="lg:col-span-8">
+                            <div id="role-content" class="bg-white border border-slate-200 rounded-xl p-8 h-full shadow-sm">
+                                <!-- Content injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shared Tasks Block -->
+                <div class="bg-amber-50 rounded-xl p-6 border border-amber-100">
+                    <h3 class="text-lg font-bold text-amber-900 mb-4"><i class="fa-solid fa-handshake mr-2"></i>Tareas Cooperativas (+2.0 Puntos)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="text-amber-500 mb-2"><i class="fa-solid fa-comments"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm">Entrevista Conjunta</h4>
+                            <p class="text-xs text-slate-500 mt-1">Todo el equipo participa en la toma de datos inicial para asegurar la comprensión.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="text-amber-500 mb-2"><i class="fa-solid fa-glasses"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm">Revisión Cruzada</h4>
+                            <p class="text-xs text-slate-500 mt-1">El Analista valida los diagramas; el Arquitecto verifica los requisitos.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="text-amber-500 mb-2"><i class="fa-solid fa-chalkboard-user"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm">Integración & Exposición</h4>
+                            <p class="text-xs text-slate-500 mt-1">Unificación de documentos y defensa oral del proyecto.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: WORKFLOW -->
+            <section id="view-workflow" class="hidden space-y-8 animate-fade-in">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Metodología y Flujo de Trabajo</h2>
+                    <p class="text-slate-600 mb-6 text-sm">
+                        Visualización del camino crítico del proyecto. Se observa claramente el bloqueo inicial (Requisitos) y la posterior paralelización de tareas técnicas y de gestión.
+                    </p>
+
+                    <!-- HTML-based Diagram -->
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-4 py-8 overflow-x-auto">
+                        
+                        <!-- Step 1 -->
+                        <div class="flow-node flow-arrow flex flex-col items-center w-full md:w-48 group">
+                            <div class="w-full bg-slate-800 text-white p-4 rounded-lg text-center relative z-10 border-b-4 border-amber-500">
+                                <i class="fa-solid fa-flag-checkered mb-2 text-amber-400"></i>
+                                <h4 class="font-bold text-sm">Inicio</h4>
+                                <p class="text-xs text-slate-400 mt-1">Entrevista Conjunta</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="flow-node flow-arrow flex flex-col items-center w-full md:w-48 group">
+                            <div class="w-full bg-blue-600 text-white p-4 rounded-lg text-center relative z-10 border-b-4 border-blue-800">
+                                <i class="fa-solid fa-file-pen mb-2 text-blue-200"></i>
+                                <h4 class="font-bold text-sm">Requisitos</h4>
+                                <p class="text-xs text-blue-200 mt-1">Analista (M1)</p>
+                            </div>
+                            <div class="mt-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded">Bloqueante</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 (Parallel Container) -->
+                        <div class="flow-arrow flex flex-col gap-4 w-full md:w-48">
+                            <div class="flow-node w-full bg-emerald-600 text-white p-4 rounded-lg text-center relative z-10 border-b-4 border-emerald-800">
+                                <i class="fa-solid fa-sitemap mb-2 text-emerald-200"></i>
+                                <h4 class="font-bold text-sm">Modelado</h4>
+                                <p class="text-xs text-emerald-200 mt-1">Arquitecto (M2)</p>
+                            </div>
+                            <div class="flow-node w-full bg-purple-600 text-white p-4 rounded-lg text-center relative z-10 border-b-4 border-purple-800">
+                                <i class="fa-solid fa-layer-group mb-2 text-purple-200"></i>
+                                <h4 class="font-bold text-sm">Diseño UI</h4>
+                                <p class="text-xs text-purple-200 mt-1">Project Manager (M3)</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="flow-node flex flex-col items-center w-full md:w-48 group">
+                            <div class="w-full bg-slate-800 text-white p-4 rounded-lg text-center relative z-10 border-b-4 border-amber-500">
+                                <i class="fa-solid fa-gift mb-2 text-amber-400"></i>
+                                <h4 class="font-bold text-sm">Entrega</h4>
+                                <p class="text-xs text-slate-400 mt-1">Integración Final</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legend/Context -->
+                    <div class="mt-6 bg-slate-50 p-4 rounded-lg border border-slate-200 text-sm text-slate-600">
+                        <strong class="text-slate-800">Nota Metodológica:</strong> 
+                        La fase de "Requisitos" actúa como cuello de botella. Los Diagramas de Flujo de Datos (M2) y el Diseño de Interfaces (M3) no pueden comenzar con precisión hasta que los requisitos funcionales estén cerrados por el Miembro 1.
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer class="mt-12 text-center text-xs text-slate-400 pb-8 border-t border-slate-200 pt-6">
+            <p>© 2024 IES Celia Viñas - Tarea 2: Entornos de Desarrollo</p>
+            <p class="mt-1">Generated System Analysis Dashboard</p>
+        </footer>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- DATA STORE ---
+        const roleData = {
+            analyst: {
+                title: "Analista de Requisitos",
+                member: "Miembro 1",
+                points: 3.5,
+                colorClass: "text-blue-600",
+                bgClass: "bg-blue-50",
+                description: "Encargado de la 'traducción' de las necesidades del cliente a lenguaje técnico. Es el inicio de la cadena de producción.",
+                deliverables: [
+                    { name: "Redacción del Enunciado", desc: "Definición clara del problema." },
+                    { name: "Requisitos Funcionales", desc: "1.0 Puntos - Núcleo del sistema." },
+                    { name: "Requisitos No Funcionales", desc: "0.5 Puntos - Restricciones técnicas." },
+                    { name: "Estudio de Viabilidad", desc: "Análisis técnico y económico." },
+                    { name: "Diccionario de Datos", desc: "0.5 Puntos - Definición de términos." },
+                    { name: "Maquetación Final", desc: "1.0 Puntos - Formato de memoria." }
+                ]
+            },
+            architect: {
+                title: "Arquitecto de Datos",
+                member: "Miembro 2",
+                points: 2.5,
+                colorClass: "text-emerald-600",
+                bgClass: "bg-emerald-50",
+                description: "Responsable de la lógica interna. Convierte requisitos en diagramas técnicos. Alta carga cognitiva.",
+                deliverables: [
+                    { name: "DFD Nivel 0 (Contexto)", desc: "Visión global del sistema." },
+                    { name: "DFD Nivel 1 & 2", desc: "1.5 Puntos - Desglose detallado." },
+                    { name: "Diagrama E-R", desc: "0.5 Puntos - Estructura de BBDD." },
+                    { name: "Diagramas de Flujo", desc: "0.5 Puntos - Lógica de procesos." }
+                ]
+            },
+            pm: {
+                title: "Jefe de Proyecto & UI",
+                member: "Miembro 3",
+                points: 2.0,
+                colorClass: "text-purple-600",
+                bgClass: "bg-purple-50",
+                description: "Encargado de la coordinación temporal y la visión visual. Asegura que el proyecto se entregue a tiempo y se vea bien.",
+                deliverables: [
+                    { name: "Gestión Jira", desc: "Configuración de incidencias." },
+                    { name: "Diagrama de Gantt", desc: "1.5 Puntos - Planificación temporal." },
+                    { name: "Prototipado UI", desc: "0.5 Puntos - Diseño de pantallas." },
+                    { name: "Coordinación", desc: "Integración de partes." }
+                ]
+            }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let currentTab = 'dashboard';
+        let currentRole = 'analyst';
+
+        // --- NAVIGATION LOGIC ---
+        function switchTab(tabId) {
+            // Update State
+            currentTab = tabId;
+
+            // Update UI Tabs
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active-tab', 'text-blue-600');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-slate-500');
+            activeBtn.classList.add('active-tab');
+
+            // Update Views
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-roles').classList.add('hidden');
+            document.getElementById('view-workflow').classList.add('hidden');
+
+            const activeView = document.getElementById(`view-${tabId}`);
+            activeView.classList.remove('hidden');
+            
+            // Trigger chart resize if needed when becoming visible
+            if(tabId === 'dashboard') {
+                if(window.pointsChartInstance) window.pointsChartInstance.resize();
+                if(window.skillsChartInstance) window.skillsChartInstance.resize();
+            }
+        }
+
+        // --- ROLE SELECTION LOGIC ---
+        function selectRole(roleKey) {
+            currentRole = roleKey;
+            const data = roleData[roleKey];
+
+            // Update Button Styles
+            ['analyst', 'architect', 'pm'].forEach(key => {
+                const btn = document.getElementById(`btn-${key}`);
+                if(key === roleKey) {
+                    btn.className = `w-full text-left p-4 rounded-xl border-2 transition-all shadow-md ${key === 'analyst' ? 'border-blue-500 bg-blue-50' : key === 'architect' ? 'border-emerald-500 bg-emerald-50' : 'border-purple-500 bg-purple-50'}`;
+                } else {
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all hover:shadow-md";
+                }
+            });
+
+            // Update Content Area
+            const container = document.getElementById('role-content');
+            
+            let deliverablesHtml = data.deliverables.map(d => `
+                <li class="flex items-start pb-3 border-b border-slate-100 last:border-0 last:pb-0">
+                    <i class="fa-solid fa-check-circle mt-1 mr-3 ${data.colorClass}"></i>
+                    <div>
+                        <span class="font-medium text-slate-800 block">${d.name}</span>
+                        <span class="text-xs text-slate-500">${d.desc}</span>
+                    </div>
+                </li>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-3 rounded-lg ${data.bgClass} ${data.colorClass}">
+                            <i class="fa-solid fa-user-tag text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800">${data.title}</h3>
+                            <span class="text-sm font-medium text-slate-500">${data.member} • Puntuación Individual: ${data.points} pts</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-slate-600 mb-8 leading-relaxed">
+                        ${data.description}
+                    </p>
+
+                    <h4 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-wider">Entregables Principales</h4>
+                    <ul class="space-y-3">
+                        ${deliverablesHtml}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // --- CHARTS CONFIGURATION ---
+        function initCharts() {
+            // Chart 1: Points Distribution (Doughnut)
+            const ctxPoints = document.getElementById('pointsChart').getContext('2d');
+            window.pointsChartInstance = new Chart(ctxPoints, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Analista (M1)', 'Arquitecto (M2)', 'PM & UI (M3)', 'Compartido'],
+                    datasets: [{
+                        data: [3.5, 2.5, 2.0, 2.0],
+                        backgroundColor: [
+                            '#3b82f6', // Blue
+                            '#10b981', // Emerald
+                            '#a855f7', // Purple
+                            '#f59e0b'  // Amber
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, font: { family: 'Inter', size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Skill Profile (Radar)
+            const ctxSkills = document.getElementById('skillsChart').getContext('2d');
+            window.skillsChartInstance = new Chart(ctxSkills, {
+                type: 'radar',
+                data: {
+                    labels: ['Documentación', 'Lógica/Datos', 'Diseño Visual', 'Gestión', 'Comunicación'],
+                    datasets: [
+                        {
+                            label: 'Analista',
+                            data: [90, 40, 20, 30, 80],
+                            fill: true,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: '#3b82f6',
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#3b82f6'
+                        },
+                        {
+                            label: 'Arquitecto',
+                            data: [30, 95, 20, 20, 60],
+                            fill: true,
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            borderColor: '#10b981',
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#10b981'
+                        },
+                        {
+                            label: 'PM & UI',
+                            data: [40, 20, 90, 90, 70],
+                            fill: true,
+                            backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                            borderColor: '#a855f7',
+                            pointBackgroundColor: '#a855f7',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#a855f7'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, font: { family: 'Inter', size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            selectRole('analyst'); // Initialize role view
+            
+            // Add simple fade animation CSS dynamically
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+            `;
+            document.head.appendChild(style);
+        });
+
+    </script>
+</body>
+</html>
