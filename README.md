@@ -99,17 +99,6 @@ Para asegurar la coherencia del proyecto, se establecen los siguientes **hitos d
 
 ---
 
-## 🛠️ Herramientas Recomendadas
-
-| Propósito | Herramientas |
-|-----------|--------------|
-| Diagramas DFD / E-R | [draw.io](https://draw.io), Dia, Lucidchart |
-| Gestión de proyecto | [Jira](https://www.atlassian.com/software/jira), Trello |
-| Prototipado UI | Figma, Balsamiq, Adobe XD |
-| Documentación | Google Docs, Microsoft Word |
-
----
-
 <p align="center">
   <b>IES Celia Viñas</b><br/>
   <sub>Ciclo Formativo de Grado Superior en Desarrollo de Aplicaciones Web</sub><br/>
