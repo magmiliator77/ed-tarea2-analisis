@@ -113,5 +113,5 @@ Para asegurar la coherencia del proyecto, se establecen los siguientes **hitos d
 <p align="center">
   <b>IES Celia Viñas</b><br/>
   <sub>Ciclo Formativo de Grado Superior en Desarrollo de Aplicaciones Web</sub><br/>
-  <sub>Curso 2024-2025</sub>
+  <sub>Curso 2025-2026😎</sub>
 </p>
